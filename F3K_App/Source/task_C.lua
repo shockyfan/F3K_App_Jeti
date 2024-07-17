@@ -364,10 +364,10 @@ local function screen()
 	lcd.drawText(40,75,targetTimeTxt,FONT_MAXI)
 	
 	if((goodFlightsF3K[5][1] >0)or(goodFlightsF3K[5][2] >0)) then	 -- all flights valid , draw all flights invers
-		lcd.drawFilledRectangle(135,15,180,(5*15) +2)
+		-- lcd.drawFilledRectangle(135,15,180,(5*15) +2)
 		drawInvers = true
 	elseif(flightIndexF3K > 1)then
-		lcd.drawFilledRectangle(135,15,180,((flightIndexF3K-1)*15) +2)
+		-- lcd.drawFilledRectangle(135,15,180,((flightIndexF3K-1)*15) +2)
 	end	
 	for i=1 , 5 do
 		sumTimeTxt =  nil
@@ -380,7 +380,7 @@ local function screen()
 			flightTimeTxt =  string.format( "%02d:%02d:%02d", math.modf(goodFlightsF3K[i][1] / 60),goodFlightsF3K[i][1] % 60,flightTimeMs ) 
 			flightScreenTxt = string.format("%s  %s  %s",flightTimesTxtF3K,flightTimeTxt,sumTimeTxt)
 			if(globVar.colorScreenF3K== true) then
-				lcd.setColor(255,255,255)
+				--lcd.setColor(255,255,255)
 				lcd.drawText(135,i*15,flightScreenTxt,FONT_NORMAL)
 				lcd.setColor(0,0,0)
 			else
@@ -393,7 +393,7 @@ local function screen()
 			flightScreenTxt = string.format("%s  %s  %s",flightTimesTxtF3K,flightTimeTxt,sumTimeTxt)
 			if(goodFlightsF3K[5][1] >0) then --write last current flight
 				if(globVar.colorScreenF3K== true) then
-					lcd.setColor(255,255,255)
+					--lcd.setColor(255,255,255)
 					lcd.drawText(135,i*15,flightScreenTxt,FONT_NORMAL)
 					lcd.setColor(0,0,0)
 				else
