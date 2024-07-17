@@ -354,12 +354,12 @@ local function screen()
 	end
 
 	if(goodFlightsF3K[20][2] >0) then	 -- all flights valid , draw all flights invers
-		lcd.drawFilledRectangle(130,0,180,(8*15) +2)
+		-- lcd.drawFilledRectangle(130,0,180,(8*15) +2)
 	elseif(flightIndexF3K > 1)then
 		if(globVar.flightIndexScrollScreenF3K == 0)then
-			lcd.drawFilledRectangle(130,0,180,((flightIndexF3K-globVar.flightIndexOffsetScreenF3K-1)*15) +2)
+			-- lcd.drawFilledRectangle(130,0,180,((flightIndexF3K-globVar.flightIndexOffsetScreenF3K-1)*15) +2)
 		else
-			lcd.drawFilledRectangle(130,0,180,((flightIndexF3K-globVar.flightIndexOffsetScreenF3K)*15) +2)
+			-- lcd.drawFilledRectangle(130,0,180,((flightIndexF3K-globVar.flightIndexOffsetScreenF3K)*15) +2)
 		end
 	end	
 
@@ -376,9 +376,9 @@ local function screen()
 			breakTimeTxt =  string.format( "%02d:%02d:%02d", math.modf(goodFlightsF3K[listIndex][2]/ 60),goodFlightsF3K[listIndex][2] % 60,breakTimeMs )
 			flightTimeTxt =  string.format( "%02d:%02d:%02d", math.modf(goodFlightsF3K[listIndex][1] / 60),goodFlightsF3K[listIndex][1] % 60,flightTimeMs ) 
 			sumTimeTxt =  string.format( "%1d:%02d", math.modf(goodFlightsF3K[listIndex][3] / 60),goodFlightsF3K[listIndex][3] % 60) 
-			flightScreenTxt = string.format("%s  %s  %s",breakTimeTxt,flightTimeTxt,sumTimeTxt)
+			flightScreenTxt = string.format("%s %s  %s  %s",listIndex,breakTimeTxt,flightTimeTxt,sumTimeTxt)
 			if(globVar.colorScreenF3K== true) then
-				lcd.setColor(255,255,255) -- white
+				--lcd.setColor(255,255,255) -- white
 				lcd.drawText(135,i*15-15,flightScreenTxt,FONT_NORMAL)
 				lcd.setColor(0,0,0) -- black
 			else
@@ -390,10 +390,10 @@ local function screen()
 			flightTimeTxt =  string.format( "%02d:%02d:%02d", math.modf(flightTimeF3K / 60),flightTimeF3K % 60,flightTimeMs ) 
 			breakTimeTxt =  string.format( "%02d:%02d:%02d", math.modf(breakTimeF3K / 60),breakTimeF3K % 60,breakTimeMs )
 			sumTimeTxt =  string.format( "%1d:%02d", math.modf(globVar.cfgTargetTimeF3K / 60),globVar.cfgTargetTimeF3K % 60) 
-			flightScreenTxt=string.format("%s  %s  %s",breakTimeTxt,flightTimeTxt,sumTimeTxt)
+			flightScreenTxt=string.format("%s %s  %s  %s",listIndex,breakTimeTxt,flightTimeTxt,sumTimeTxt)
 			if(goodFlightsF3K[20][2] >0) then --write last current flight
 				if(globVar.colorScreenF3K== true) then
-					lcd.setColor(255,255,255)-- white
+					--lcd.setColor(255,255,255)-- white
 					lcd.drawText(135,i*15-15,flightScreenTxt,FONT_NORMAL)
 					lcd.setColor(0,0,0) -- black
 				else
