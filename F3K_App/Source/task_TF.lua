@@ -260,7 +260,6 @@ local function task_TF_flights() -- wait for start flight switch count preflight
 				startFlightTimeF3K = globVar.currentTimeF3K
 				globVar.soundTimeF3K = 0
 				globVar.prevSoundTimeF3K = 1
-				flightFinishedF3K = false
 			end	
 		end
 	end
@@ -375,6 +374,7 @@ local function screen()
 			flightTimeMs = ((goodFlightsF3K[listIndex][1] -  math.modf(goodFlightsF3K[listIndex][1]))*100)
 			breakTimeTxt =  string.format( "%02d:%02d:%02d", math.modf(goodFlightsF3K[listIndex][2]/ 60),goodFlightsF3K[listIndex][2] % 60,breakTimeMs )
 			flightTimeTxt =  string.format( "%02d:%02d:%02d", math.modf(goodFlightsF3K[listIndex][1] / 60),goodFlightsF3K[listIndex][1] % 60,flightTimeMs ) 
+		
 			sumTimeTxt =  string.format( "%1d:%02d", math.modf(goodFlightsF3K[listIndex][3] / 60),goodFlightsF3K[listIndex][3] % 60) 
 			flightScreenTxt = string.format("%s %s  %s  %s",listIndex,breakTimeTxt,flightTimeTxt,sumTimeTxt)
 			if(globVar.colorScreenF3K== true) then

@@ -28,7 +28,7 @@
 -- # of the authors and should not be interpreted as representing official policies,
 -- # either expressed or implied, of the FreeBSD Project.                    
 -- #                       
--- # V1.0.5 - separate configuration from main function with dynamic storage management         
+-- # V1.1.0 - separate configuration from main function with dynamic storage management         
 -- #############################################################################
 
 -------------------------------------------------------------------- 
@@ -260,6 +260,48 @@ local function F3K_Config()
 		form.addLabel({label=globVar.langF3K.height,width=220})
 		form.addIntbox(globVar.cfgStartHeightF3K,0,200,120,0,10, HeightChanged)
     end
+
+	if(globVar.currentTaskF3K == 19) then -- sensor adjustments for Task TLA launch application
+        sensorsAvailable = {}
+		local available = system.getSensors();
+		local list={}
+		local curIndex_height=-1
+		local curIndex_vario=-1
+		local descr = ""
+		for index,sensor in ipairs(available) do 
+			if(sensor.param == 0) then
+				descr = sensor.label
+				else
+				list[#list+1]=string.format("%s [%s]-%s",sensor.label,sensor.unit,descr)
+				sensorsAvailable[#sensorsAvailable+1] = sensor
+				if((sensor.id==globVar.heightSensorId and sensor.param==globVar.heightParamId) ) then
+					curIndex_height=#sensorsAvailable
+				end
+				if (sensor.id==globVar.varioSensorId and sensor.param==globVar.varioParamId) then
+					curIndex_vario=#sensorsAvailable
+				end
+			end 
+		end
+		form.addRow(2)
+		form.addLabel({label=globVar.langF3K.target,width=220})
+		form.addIntbox(globVar.cfgTargetTimeF3K,20,900,0,0,20,targetTimeChanged)
+
+		form.addRow(2)
+		form.addLabel({label=globVar.langF3K.selectHeightSensor,width=220})
+		form.addSelectbox (list, curIndex_height,true,AltSensChanged,{width=280})
+		
+		form.addRow(2)
+		form.addLabel({label=globVar.langF3K.selectVarioSensor,width=220})
+		form.addSelectbox (list, curIndex_vario,true,VarSensChanged,{width=280})
+		
+		form.addRow(2)
+		form.addLabel({label=globVar.langF3K.timeoffset,width=220})
+		form.addIntbox(globVar.cfgTimeoffsetF3K,0,2000,1000,0,100,TimeoffsetChanged)
+		
+		form.addRow(2)
+		form.addLabel({label=globVar.langF3K.height,width=220})
+		form.addIntbox(globVar.cfgStartHeightF3K,0,200,120,0,10, HeightChanged)
+    end
 	
 	-- Assigned switch start frame time
 	form.addRow(2)
@@ -315,7 +357,7 @@ local function init(code,globVar_)
         globVar.cfgTargetTimeF3K_TL=system.pLoad("adTargetTime",600)  --only for task TL
 		globVar.taskList={globVar.langF3K.A,globVar.langF3K.B,globVar.langF3K.C,globVar.langF3K.D,globVar.langF3K.E,
 				  globVar.langF3K.F,globVar.langF3K.G,globVar.langF3K.H,globVar.langF3K.I,globVar.langF3K.J,
-				  globVar.langF3K.K,globVar.langF3K.L,globVar.langF3K.M,globVar.langF3K.TF,globVar.langF3K.TS,globVar.langF3K.FF,globVar.langF3K.Dold,globVar.langF3K.LA} --initialize the task list
+				  globVar.langF3K.K,globVar.langF3K.L,globVar.langF3K.M,globVar.langF3K.TF,globVar.langF3K.TS,globVar.langF3K.FF,globVar.langF3K.Dold,globVar.langF3K.LA,globVar.langF3K.TLA} --initialize the task list
 		globVar.cfgAudioFlights = system.pLoad("audioFlights",{3,5,4,3,3,3})  -- number of audio output best flights in order for tasks F,G,H,I,J
 		globVar.heightSensorId = system.pLoad("sensor_h",0) -- altitude sensor for task LA
 		globVar.heightParamId = system.pLoad("param_h",0)   -- altitude sensor for task LA
