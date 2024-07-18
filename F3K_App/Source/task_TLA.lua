@@ -32,7 +32,6 @@
 
 local prevFrameAudioSwitchF3K = 0 --audio switch logic for output ramaining frame time
 local taskStateF3K = 1 -- contains the current state of task state machine
-local sumTimerF3K = 0 -- summary of valid flights
 local flightIndexF3K = 1 -- current flight number of the task
 local startFrameTimeF3K = 0 -- start time stamp frame time
 local startFlightTimeF3K = 0 -- start time stamp flight time
@@ -43,16 +42,12 @@ local flightFinishedF3K = true -- logic to avoid negative count of remaining fli
 local remainingFlightTimeF3K = 0 -- contains remaining flight time in ms
 local remainingFlightTimeMinF3K = 0 -- contains remaining flight time min
 local remainingFlightTimeSecF3K = 0 -- contains remaining flight time sec
-local flightTimesTxtF3K = nil -- contains all flight times for the task (times to fly)
-local flightTimesF3K = nil -- contains all flight times of the task in ms for comparison(times to fly)
 local preSwitchNextFlightF3K = false  -- logic for start next flight (stopp switch musst be pressed and released)
-local failedFlightIndexF3K = 1 -- current index of failed flight list
 local flightTimeF3K = 0
 local breakTimeF3K = 0
-local failedFlightsF3K = nil --list of failed flights
 local goodFlightsF3K = nil --list of all good flights
 local preSwitchTaskResetF3K = false --logic for reset task switch (for tasks with combined stopp and reset functionality e.g. task A and B)
-local flightCountDownF3K = false -- flight count down for poker task was switched
+local measureF3K = false -- measure was switched
 local flightFinishedF3K = true -- logic to avoid negative count of remaining flight time
 local sumAudioOutput = 0 -- helper for audio output flight times
 local lng=system.getLocale()
