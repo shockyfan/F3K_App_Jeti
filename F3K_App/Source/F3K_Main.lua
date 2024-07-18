@@ -139,7 +139,10 @@ local function resetTask_(unloadTask)
         elseif(globVar.currentTaskF3K == 18)then -- launch app
 			task_Path = "F3K/Tasks/task_LA"
 			task_lib = require(task_Path)    
-		elseif(globVar.currentTaskF3K == 19)then -- empty task, necessary for loading on startup to avoid storage lack
+        elseif(globVar.currentTaskF3K == 19)then -- timed launch app
+			task_Path = "F3K/Tasks/task_TLA"
+			task_lib = require(task_Path)    
+		elseif(globVar.currentTaskF3K == 20)then -- empty task, necessary for loading on startup to avoid storage lack
 			-- nothing to do
 		else	-- free flight is default task
 			globVar.currentTaskF3K = 16
@@ -159,6 +162,8 @@ local function resetTask_(unloadTask)
 		globVar.taskCharF3K = "Dold"
 	elseif(globVar.currentTaskF3K == 18)then 
 		globVar.taskCharF3K = "LA"
+	elseif(globVar.currentTaskF3K == 19)then 
+		globVar.taskCharF3K = "TLA"
   	else
 		globVar.taskCharF3K = "  "
 	end
@@ -186,7 +191,7 @@ local function init(code,globVar_)
             collectgarbage('collect')
         end
    	else
-		globVar.currentTaskF3K = 19 -- unload task lib
+		globVar.currentTaskF3K = 20 -- unload task lib
 	end
 	resetTask_(1)
 end

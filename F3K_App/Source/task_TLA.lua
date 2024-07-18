@@ -27,7 +27,7 @@
 -- # The views and conclusions contained in the software and documentation are those
 -- # of the authors and should not be interpreted as representing official policies,
 -- # either expressed or implied, of the FreeBSD Project.                    
--- # V1.0.5 - Task LA Launch App by Scherndi      
+-- # V1.1.0 - Task TLA: Time & Launch App by Tjark      
 -- #############################################################################
 
 local prevFrameAudioSwitchF3K = 0 --audio switch logic for output ramaining frame time
@@ -52,7 +52,7 @@ local breakTimeF3K = 0
 local failedFlightsF3K = nil --list of failed flights
 local goodFlightsF3K = nil --list of all good flights
 local preSwitchTaskResetF3K = false --logic for reset task switch (for tasks with combined stopp and reset functionality e.g. task A and B)
-local flightCountDownF3K = false -- flight count down for poker task was switched
+local measureF3K = false -- measure was switched
 local flightFinishedF3K = true -- logic to avoid negative count of remaining flight time
 local sumAudioOutput = 0 -- helper for audio output flight times
 local lng=system.getLocale()
@@ -83,9 +83,10 @@ local caliTimeF3K = 0
 local function taskInit(globVar_)
 	globVar = globVar_
     globVar.author = nil
-    globVar.author = "Scherndi" -- set author of task here
+    globVar.author = "Tjark" -- set author of task here
 	taskStateF3K = 1
 	prevFrameAudioSwitchF3K = 0 --audio switch logic for output ramaining frame time
+	sumTimerF3K = 0 -- summary of valid flights
 	flightIndexF3K = 1 -- current flight number of the task
 	startFrameTimeF3K = 0 -- start time stamp frame time
 	startFlightTimeF3K = 0 -- start time stamp flight time
@@ -96,15 +97,20 @@ local function taskInit(globVar_)
 	remainingFlightTimeF3K = 0 -- contains remaining flight time in ms
 	remainingFlightTimeMinF3K = 0 -- contains remaining flight time min
 	remainingFlightTimeSecF3K = 0 -- contains remaining flight time sec
+	flightTimesTxtF3K = nil -- contains all flight times for the task (times to fly)
+	flightTimesF3K = globVar.cfgTargetTimeF3K -- contains all flight times of the task in ms for comparison(times to fly)
 	preSwitchNextFlightF3K = false  -- logic for start next flight (stopp switch musst be pressed and released)
+	failedFlightIndexF3K = 0 -- current index of failed flight list
 	flightTimeF3K = 0
 	breakTimeF3K = 0
+	failedFlightsF3K = nil --list of failed flights
 	goodFlightsF3K = nil --list of all good flights
 	preSwitchTaskResetF3K = false --logic for reset task switch (for tasks with combined stopp and reset functionality e.g. task A and B)
+	flightCountDownF3K = false -- flight count down for poker task was switched
 	measureF3K = false -- measure was switched
     globVar.flightIndexOffsetScreenF3K = 0 -- for display if more than 8 flights in list
     globVar.flightIndexScrollScreenF3K = 0 -- for scrolling up and down if more than 8 flights in list
-    goodFlightsF3K = {{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0},{0,0,0}} -- flight time , break time, sum time
+    goodFlightsF3K = {{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0},{0,0,0,0,0}} -- flight time , break time, sum time
 	flightFinishedF3K = true -- logic to avoid negative count of remaining flight time
 	sumAudioOutput = 0 -- helper for audio output flight times
 	prevTime = globVar.currentTimeF3K
@@ -211,9 +217,9 @@ local function file(tFileF3K)
 	
 end
 --------------------------------------------------------------------
--- eventhandler task  LA Launch App
+-- eventhandler task  TLA Launch App
 --------------------------------------------------------------------
-local function task_LA_Start() -- wait for start switch start 5s count down and start frame time
+local function task_TLA_Start() -- wait for start switch start 5s count down and start frame time
 	prevFrameAudioSwitchF3K = 1 -- lock audio output remaining frame time
 	
 	if(taskStartSwitchedF3K == false)then
@@ -259,7 +265,7 @@ local function task_LA_Start() -- wait for start switch start 5s count down and 
 	end	
 end
 --------------------------------------------------------------------
-local function task_LA_flights() -- wait for start flight switch count preflight time start, end, start next flight
+local function task_TLA_flights() -- wait for start flight switch count preflight time start, end, start next flight
 	if(onFlightF3K == true)then -- flight active	
 		flightTimeF3K =(globVar.currentTimeF3K - startFlightTimeF3K)/1000
 		remainingFlightTimeF3K = globVar.cfgTargetTimeF3K-flightTimeF3K + 1
@@ -274,16 +280,31 @@ local function task_LA_flights() -- wait for start flight switch count preflight
 		
 		height,vario, isnew = getFromSensor ()
 		
-			if(isnew and vario > vario_max) then
-					vario_max = vario
-			end 
-			if(isnew and height > hoehe_max) then
-					hoehe_max = height
-			end 
-		
-		if(1==system.getInputsVal(globVar.cfgMeasureSwitchF3K) and measureF3K ==false and goodFlightsF3K[flightIndexF3K][1] == 0)then 
-		goodFlightsF3K[flightIndexF3K][1]=flightTimeF3K	
-		goodFlightsF3K[flightIndexF3K][3]=vario_max
+		if(isnew and vario > vario_max) then
+				vario_max = vario
+		end 
+		if(isnew and height > hoehe_max) then
+				hoehe_max = height
+		end 
+	
+		if(sumAudioOutput == 0)then
+			globVar.soundTimeF3K = math.modf(remainingFlightTimeF3K)
+			audioCountDownF3K()
+		end	
+		if((globVar.soundTimeF3K >=0)and(globVar.soundTimeF3K ~= globVar.prevSoundTimeF3K))then
+			if((globVar.soundTimeF3K%60)==0)then
+				system.playNumber(globVar.soundTimeF3K/60,0,"min")
+				globVar.prevSoundTimeF3K = globVar.soundTimeF3K
+			elseif(globVar.soundTimeF3K == globVar.cfgTargetTimeF3K) then
+				system.playNumber(remainingFlightTimeMinF3K,0,"min")
+				system.playNumber(remainingFlightTimeSecF3K,0,"s")
+				globVar.prevSoundTimeF3K = globVar.soundTimeF3K
+			end
+		end
+
+		if(1==system.getInputsVal(globVar.cfgMeasureSwitchF3K) and measureF3K ==false and goodFlightsF3K[flightIndexF3K][4] == 0)then 
+		--goodFlightsF3K[flightIndexF3K][1]=flightTimeF3K	
+		goodFlightsF3K[flightIndexF3K][4]=vario_max
 		
 		h_helper = height
 		measuretime = globVar.currentTimeF3K 
@@ -298,7 +319,7 @@ local function task_LA_flights() -- wait for start flight switch count preflight
 			else			
 				height_cor = h_helper + h_drift 				
 			end
-			goodFlightsF3K[flightIndexF3K][2]=height_cor
+			goodFlightsF3K[flightIndexF3K][5]=height_cor
 						
 			h_cal = false
 			measureF3K = false		
@@ -309,6 +330,13 @@ local function task_LA_flights() -- wait for start flight switch count preflight
 		
 			
 		if(1==system.getInputsVal(globVar.cfgStoppFlightSwitchF3K) and measureF3K ~= true)then -- stopp flight was switched
+			goodFlightsF3K[flightIndexF3K][1]=flightTimeF3K
+			goodFlightsF3K[flightIndexF3K][2]=breakTimeF3K 
+			if(flightTimeF3K >= globVar.cfgTargetTimeF3K) then --
+				sumTimerF3K = sumTimerF3K + globVar.cfgTargetTimeF3K -- increment sum timer
+			else 
+				sumTimerF3K = sumTimerF3K + math.modf(flightTimeF3K)
+			end		
 			
 			if(flightIndexF3K == 20) then -- end of flight list reached finish task
 				system.playFile("/Apps/F3K/Audio/"..lng.."/F3K_Tend.wav",AUDIO_QUEUE)
@@ -364,6 +392,7 @@ local function task_LA_flights() -- wait for start flight switch count preflight
 			if(1==system.getInputsVal(globVar.cfgStartFlightSwitchF3K)) then
 					
 				onFlightF3K = true
+				flightCountDownF3K = false
 				flightFinishedF3K = false
 				startFlightTimeF3K = globVar.currentTimeF3K
 				globVar.soundTimeF3K = 0
@@ -377,7 +406,7 @@ local function task_LA_flights() -- wait for start flight switch count preflight
 
 end
 --------------------------------------------------------------------
-local function task_LA_End()     -- safe training?
+local function task_TLA_End()     -- safe training?
 	prevFrameAudioSwitchF3K = 1 -- lock audio output remaining frame time
 	if(1==system.getInputsVal(globVar.cfgTimerResetSwitchF3K)) then
 		if(preSwitchTaskResetF3K == false)then
@@ -391,25 +420,28 @@ local function task_LA_End()     -- safe training?
 	end
 end
 --------------------------------------------------------------------
-local task_LA_States = {task_LA_Start,task_LA_flights,task_LA_End}
+local task_TLA_States = {task_TLA_Start,task_TLA_flights,task_TLA_End}
 --------------------------------------------------------------------
 local function task()
 --lcd.drawText(10,10,"task",FONT_NORMAL)
 --system.playNumber(1,1)
-	local taskHandler = task_LA_States[taskStateF3K] -- set statemachine depending on last current state
+	local taskHandler = task_TLA_States[taskStateF3K] -- set statemachine depending on last current state
 	local soundheight = 0
 	local soundvario = 0	
 	taskHandler()
-	
-	--[[
 	if(1==system.getInputsVal(globVar.cfgFrameAudioSwitchF3K)) then
 		if((prevFrameAudioSwitchF3K ==0)and (flightIndexF3K >1))then
 			prevFrameAudioSwitchF3K = 1  -- play audio file for break time
-			soundheight = goodFlightsF3K[flightIndexF3K-1][1] -- break time of previous flight
-			
-			
-				system.playNumber(soundheight,1)
-			
+			soundTime = goodFlightsF3K[flightIndexF3K-1][2] -- break time of previous flight
+			soundMin =  math.modf(soundTime / 60)
+			if(soundMin>0)then
+				system.playNumber(soundMin,0,"min")
+				soundSec = soundTime - soundMin * 60
+				system.playNumber(soundSec,1)
+			else
+				soundSec = soundTime
+				system.playNumber(soundSec,1)
+			end
 			sumAudioOutput = 9 --wait 9 cycles a 30ms
 		end	
 	else
@@ -421,20 +453,23 @@ local function task()
 			sumAudioOutput = sumAudioOutput - 1
 		end	
 		if((system.isPlayback() == false) and (sumAudioOutput == 1))then
-			soundvario  = goodFlightsF3K[flightIndexF3K-1][2] -- flight time of previous flight
-			
-	
-				system.playNumber(soundvario,1)
-
-		
+			soundTime = goodFlightsF3K[flightIndexF3K-1][1] -- flight time of previous flight
+			soundMin =  math.modf(soundTime / 60)
+			if(soundMin>0)then
+				system.playNumber(soundMin,0,"min")
+				soundSec = soundTime - soundMin * 60
+				system.playNumber(soundSec,1)
+			else
+				soundSec = soundTime
+				system.playNumber(soundSec,1)
+			end
 			sumAudioOutput = 0
 		end
 	end
-	--]]
 end
 
 --------------------------------------------------------------------
--- display task  LA Launch App
+-- display task  TLA Launch App
 --------------------------------------------------------------------
 local function screen()
     local listIndex = 0 
@@ -446,11 +481,11 @@ local function screen()
 	local flightTimeTxt =  nil
 	local flightScreenTxt = nil
 	local textoffset_left = 90
-	--local remainingFlightTimeTxt = nil
-	--local timeTxt = string.format( "%02d:%02d", math.modf(globVar.cfgTargetTimeF3K / 60),globVar.cfgTargetTimeF3K % 60 )
-	--local sumTimeTxt = string.format( "%02d:%02d", math.modf(sumTimerF3K / 60),sumTimerF3K % 60 )
+	local remainingFlightTimeTxt = nil
+	local timeTxt = string.format( "%02d:%02d", math.modf(globVar.cfgTargetTimeF3K / 60),globVar.cfgTargetTimeF3K % 60 )
+	local sumTimeTxt = string.format( "%02d:%02d", math.modf(sumTimerF3K / 60),sumTimerF3K % 60 )
 
-	--remainingFlightTimeTxt = string.format( "%02d:%02d",remainingFlightTimeMinF3K ,remainingFlightTimeSecF3K )
+	remainingFlightTimeTxt = string.format( "%02d:%02d",remainingFlightTimeMinF3K ,remainingFlightTimeSecF3K )
 	
 	
 		local valTxt = string.format( "%.1f", height)		
@@ -466,15 +501,15 @@ local function screen()
 	--[[
 	if(goodFlightIndex == 0)then
 		for i = 1,flightIndexF3K do
-			h_mean = h_mean + goodFlightsF3K[i][2] 
-			vario_mean = vario_mean +  goodFlightsF3K[i][3] 
+			h_mean = h_mean + goodFlightsF3K[i][5] 
+			vario_mean = vario_mean +  goodFlightsF3K[i][4] 
 		end
 		h_mean = h_mean / flightIndexF3K
 		vario_mean = vario_mean / flightIndexF3K
 	else
 		for i = 1,goodFlightIndex do
-			h_mean = h_mean + goodFlightsF3K[i][2] 
-			vario_mean = vario_mean +  goodFlightsF3K[i][3] 
+			h_mean = h_mean + goodFlightsF3K[i][5] 
+			vario_mean = vario_mean +  goodFlightsF3K[i][4] 
 		end
 		h_mean = h_mean / goodFlightIndex
 		vario_mean = vario_mean / goodFlightIndex
@@ -482,8 +517,8 @@ local function screen()
 		--]]
 		if(flightIndexF3K > 1)then
 		for i = 1,flightIndexF3K -1 do
-			h_mean = h_mean + goodFlightsF3K[i][2] 
-			vario_mean = vario_mean +  goodFlightsF3K[i][3] 
+			h_mean = h_mean + goodFlightsF3K[i][5] 
+			vario_mean = vario_mean +  goodFlightsF3K[i][4] 
 		end
 		h_mean = h_mean / (flightIndexF3K -1)
 		vario_mean = vario_mean / (flightIndexF3K -1)
@@ -543,8 +578,8 @@ local function screen()
 	
 	
 	for i = 1,flightIndexF3K do
-	h_mean = h_mean + goodFlightsF3K[i][2] 
-	vario_mean = vario_mean +  goodFlightsF3K[i][3] 
+	h_mean = h_mean + goodFlightsF3K[i][5] 
+	vario_mean = vario_mean +  goodFlightsF3K[i][4] 
 	end
 	h_mean = h_mean / flightIndexF3K
 	vario_mean = vario_mean / flightIndexF3K
@@ -574,18 +609,24 @@ local function screen()
 
 	for i=1 , 8 do
 		listIndex = i + globVar.flightIndexOffsetScreenF3K-globVar.flightIndexScrollScreenF3K
-		--breakTimeTxt =  nil
+		breakTimeTxt =  nil
 		flightTimeTxt =  nil
 		flightScreenTxt = nil
-		--sumTimeTxt = nil 
+		sumTimeTxt = nil 
 		
 		if(listIndex < flightIndexF3K) then -- write stored text for previous finished flights or if last flight valid until last flight
+		    breakTimeMs = ((goodFlightsF3K[listIndex][2] -  math.modf(goodFlightsF3K[listIndex][2]))*100) 
 			flightTimeMs = ((goodFlightsF3K[listIndex][1] -  math.modf(goodFlightsF3K[listIndex][1]))*100)
+		
+			breakTimeTxt =  string.format( "%02d:%02d:%02d", math.modf(goodFlightsF3K[listIndex][2]/ 60),goodFlightsF3K[listIndex][2] % 60,breakTimeMs )
 			flightTimeTxt =  string.format( "%02d:%02d:%02d", math.modf(goodFlightsF3K[listIndex][1] / 60),goodFlightsF3K[listIndex][1] % 60,flightTimeMs ) 
-			heightTxt = string.format( "%.1f", goodFlightsF3K[listIndex][2] ) 
-			varioTxt = string.format( "%.2f", goodFlightsF3K[listIndex][3] ) 
+
+			heightTxt = string.format( "%.1f", goodFlightsF3K[listIndex][5] ) 
+			varioTxt = string.format( "%.2f", goodFlightsF3K[listIndex][4] ) 
 			NrTxt = string.format( "%d",listIndex ) 
-			flightScreenTxt = string.format("%s   %s   %s   %s",NrTxt,heightTxt,varioTxt,flightTimeTxt)
+
+			sumTimeTxt =  string.format( "%1d:%02d", math.modf(goodFlightsF3K[listIndex][3] / 60),goodFlightsF3K[listIndex][3] % 60) 
+			flightScreenTxt = string.format("%s  %s  %s  %s  %s",NrTxt,heightTxt,varioTxt,breakTimeTxt,flightTimeTxt)
 			if(globVar.colorScreenF3K== true) then
 				--lcd.setColor(255,255,255) -- white
 				lcd.drawText(textoffset_left,i*15-15,flightScreenTxt,FONT_NORMAL)
@@ -595,13 +636,15 @@ local function screen()
 			end
 		elseif(listIndex == flightIndexF3K) then -- write current flight
 			flightTimeMs = ((flightTimeF3K -  math.modf(flightTimeF3K))*100) 
+			breakTimeMs = ((breakTimeF3K -  math.modf(breakTimeF3K))*100) 
 			flightTimeTxt =  string.format( "%02d:%02d:%02d", math.modf(flightTimeF3K / 60),flightTimeF3K % 60,flightTimeMs ) 
+			breakTimeTxt =  string.format( "%02d:%02d:%02d", math.modf(breakTimeF3K / 60),breakTimeF3K % 60,breakTimeMs )
 			--heightTxt = string.format( "%.1f", height ) 
 			--varioTxt = string.format( "%.2f", vario ) 
-			heightTxt = string.format( "%.1f", goodFlightsF3K[listIndex][2] ) 
-			varioTxt = string.format( "%.2f", goodFlightsF3K[listIndex][3]) 
+			heightTxt = string.format( "%.1f", goodFlightsF3K[listIndex][5] ) 
+			varioTxt = string.format( "%.2f", goodFlightsF3K[listIndex][4]) 
 			NrTxt = string.format( "%d", listIndex ) 
-			flightScreenTxt = string.format("%s   %s   %s   %s",NrTxt,heightTxt,varioTxt,flightTimeTxt)
+			flightScreenTxt = string.format("%s  %s  %s  %s  %s",NrTxt,heightTxt,varioTxt,breakTimeTxt,flightTimeTxt)
 			if(goodFlightsF3K[20][1] >0) then --write last current flight
 				if(globVar.colorScreenF3K== true) then
 					--lcd.setColor(255,255,255)-- white
@@ -621,5 +664,5 @@ local function screen()
 end
 
 
-local task_LA = {taskInit,frameTimeChanged,file,task,screen}
-return task_LA
+local task_TLA = {taskInit,frameTimeChanged,file,task,screen}
+return task_TLA

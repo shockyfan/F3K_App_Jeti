@@ -47,7 +47,11 @@
 -- # V1.0.3 - Bugfixing changed all global to local variables
 -- #        - Moved all F3K Audio files into app specific F3K/audio folder 
 -- # V1.0.4 - Support of DS12 Color Display and take over modifications by Gernot Tengg  
--- # V1.0.5 - separate configuration from main function with dynamic storage management        
+-- # V1.0.5 - separate configuration from main function with dynamic storage management
+-- # V1.0.6 - Fixed defect in Task I
+-- # V1.0.7 - Disabled Reverse writing (black box) for Task TF (DS12 just shows black boxes before)
+-- # V1.0.8 - Disabled Reverse writing for all tasks
+-- # V1.1.0 - Task TLA: Time & Launch App by Tjark  
 -- #############################################################################
 
 --Configuration
@@ -57,7 +61,7 @@ local main_lib = nil  -- lua main script
 local initDelay = 0
 
 local globVar ={
-				F3K_Version="V1.0.8",
+				F3K_Version="V1.1.0",
                 author="Geierwally",
 				mem = 0,
 				debugmem = 0,
